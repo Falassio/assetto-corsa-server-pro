@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assetto Corsa Server Pro - Control Panel</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <h1>AC Server Pro</h1>
+          <p>Control Plane</p>
+        </div>
+        <nav>
+          <a href="#overview">Overview</a>
+          <a href="#controls">Controls</a>
+          <a href="#config">Config</a>
+          <a href="#logs">Logs</a>
+          <a href="#audit">Audit</a>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <header class="topbar">
+          <div>
+            <h2>Assetto Corsa Control Panel</h2>
+            <span class="muted">Production-ready operations dashboard</span>
+          </div>
+          <button id="refreshBtn" class="btn subtle">Refresh</button>
+        </header>
+
+        <section id="overview" class="panel grid">
+          <article>
+            <h3>Status</h3>
+            <p id="statusBadge" class="badge">Unknown</p>
+          </article>
+          <article>
+            <h3>Uptime</h3>
+            <p id="uptimeValue">0s</p>
+          </article>
+          <article>
+            <h3>Players</h3>
+            <p><span id="playersValue">0</span> / <span id="maxPlayersValue">0</span></p>
+          </article>
+          <article>
+            <h3>Host</h3>
+            <p id="hostValue">-</p>
+          </article>
+          <article>
+            <h3>CPU Load (1m)</h3>
+            <p id="cpuValue">0.00</p>
+          </article>
+          <article>
+            <h3>Memory</h3>
+            <p id="memoryValue">0 / 0 MB</p>
+          </article>
+        </section>
+
+        <section id="controls" class="panel">
+          <h3>Server Controls</h3>
+          <div class="actions">
+            <button class="btn success" data-action="start">Start</button>
+            <button class="btn danger" data-action="stop">Stop</button>
+            <button class="btn warning" data-action="restart">Restart</button>
+            <button class="btn" data-action="update">Update</button>
+            <button class="btn" data-action="backup">Backup</button>
+          </div>
+          <p class="muted" id="actionResult">No action executed yet.</p>
+        </section>
+
+        <section id="config" class="panel">
+          <h3>Server Config (JSON)</h3>
+          <textarea id="configEditor" spellcheck="false"></textarea>
+          <div class="actions">
+            <button id="saveConfigBtn" class="btn success">Save Config</button>
+          </div>
+        </section>
+
+        <section id="logs" class="panel">
+          <h3>Live Logs</h3>
+          <pre id="logsBox"></pre>
+        </section>
+
+        <section id="audit" class="panel">
+          <h3>Audit Trail</h3>
+          <pre id="auditBox"></pre>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

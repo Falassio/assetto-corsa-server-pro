@@ -1,0 +1,14 @@
+{
+  "name": "assetto-corsa-control-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Control plane API for Assetto Corsa Server Pro",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

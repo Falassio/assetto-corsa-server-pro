@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: ac-control-api
+    environment:
+      PORT: 8080
+      DATA_DIR: /data
+      WEB_ORIGIN: "*"
+    volumes:
+      - control_plane_data:/data
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: ac-control-web
+    depends_on:
+      - api
+    ports:
+      - "${CONTROL_PANEL_PORT:-3000}:80"
+    restart: unless-stopped
+
+volumes:
+  control_plane_data:
+    name: ac-control-plane-data

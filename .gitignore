@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.log
+
+# local env files
+.env.local
+
+# local control plane data
+control-plane-data/
+
+# macOS
+.DS_Store

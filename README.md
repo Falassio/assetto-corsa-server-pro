@@ -46,6 +46,9 @@ This project fixes those issues with a modern, reproducible setup.
 - `RELEASE.md`: release and hotfix flow
 - `docs/PRODUCTION-CHECKLIST.md`: operational checklist for go-live
 - `DOCKERHUB.md`: ready-to-paste Docker Hub listing content
+- `apps/api`: control plane API
+- `apps/web`: professional control panel UI
+- `docker-compose.control-plane.yml`: control panel stack
 
 ## Ports
 
@@ -89,6 +92,30 @@ docker compose up -d --build
 docker compose ps
 docker compose logs -f ac-server
 ```
+
+## Control panel (professional UI)
+
+A full web control plane is included, with:
+
+- real-time server overview (status, uptime, host, cpu, memory)
+- lifecycle actions (start, stop, restart, update, backup)
+- JSON config editor with save flow
+- live logs view and audit trail
+- responsive layout for desktop and mobile
+
+Run it with:
+
+```bash
+docker compose -f docker-compose.control-plane.yml up -d --build
+```
+
+Then open:
+
+```text
+http://localhost:3000
+```
+
+Change panel port with `CONTROL_PANEL_PORT` in `.env`.
 
 ## Dokploy deployment
 
