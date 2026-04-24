@@ -4,6 +4,9 @@ dist/
 
 # local env files
 .env
+.env.*
+!.env.example
+!.env.production.example
 
 # local control plane data
 control-plane-data/

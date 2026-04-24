@@ -86,6 +86,12 @@ bash scripts/preflight-env.sh .env
 docker compose up -d --build
 ```
 
+Production setup template:
+
+```bash
+cp .env.production.example .env
+```
+
 4. Check status:
 
 ```bash
@@ -151,6 +157,36 @@ ACTION_BACKUP_CMD=tar -czf /data/backup-$(date +%Y%m%d%H%M%S).tgz /cfg /content 
 
 Command mode runs shell commands from the API container context. Adjust commands to your environment.
 The control API compose stack mounts `/var/run/docker.sock` to allow Docker CLI commands.
+
+## Production rollout commands
+
+1) Prepare env and validate:
+
+```bash
+cp .env.production.example .env
+bash scripts/preflight-env.sh .env
+```
+
+2) Start game server:
+
+```bash
+docker compose up -d --build
+```
+
+3) Start control panel:
+
+```bash
+docker compose -f docker-compose.control-plane.yml up -d --build
+```
+
+4) Verify:
+
+```bash
+docker compose ps
+docker compose -f docker-compose.control-plane.yml ps
+docker compose logs -f ac-server
+docker compose -f docker-compose.control-plane.yml logs -f api web
+```
 
 ## Dokploy deployment
 
