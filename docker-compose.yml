@@ -1,0 +1,54 @@
+services:
+  ac-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        STEAM_APP_ID: ${STEAM_APP_ID:-244210}
+    image: ${IMAGE_NAME:-ghcr.io/bytedminds/assetto-corsa-server-pro:latest}
+    container_name: ${CONTAINER_NAME:-assetto-corsa-server}
+    environment:
+      TZ: ${TZ:-Europe/Rome}
+      STEAM_APP_ID: ${STEAM_APP_ID:-244210}
+      AC_INSTALL_DIR: ${AC_INSTALL_DIR:-/opt/ac-server}
+      AC_SERVER_BIN: ${AC_SERVER_BIN:-acServer}
+      AC_SERVER_ARGS: ${AC_SERVER_ARGS:-}
+      STEAMCMD_MAX_RETRIES: ${STEAMCMD_MAX_RETRIES:-3}
+      STEAMCMD_RETRY_DELAY: ${STEAMCMD_RETRY_DELAY:-5}
+      STEAM_VALIDATE: ${STEAM_VALIDATE:-1}
+      SKIP_UPDATE: ${SKIP_UPDATE:-0}
+    ports:
+      - "${AC_TCP_PORT:-9600}:9600/tcp"
+      - "${AC_UDP_PORT:-9600}:9600/udp"
+      - "${HTTP_PORT:-8081}:8081/tcp"
+    volumes:
+      - ac_cfg:/cfg
+      - ac_content:/content
+      - ac_logs:/logs
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    stop_grace_period: 45s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+volumes:
+  ac_cfg:
+    name: ac-server-cfg
+  ac_content:
+    name: ac-server-content
+  ac_logs:
+    name: ac-server-logs
