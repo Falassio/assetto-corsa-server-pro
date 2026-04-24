@@ -22,6 +22,55 @@ body {
   color: var(--text);
 }
 
+.hidden {
+  display: none !important;
+}
+
+.login-view {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(34, 42, 58, 0.7), rgba(16, 21, 31, 0.95));
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.login-card h2 {
+  margin: 0;
+}
+
+.login-card p {
+  color: var(--muted);
+}
+
+.login-card form {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.login-card label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.login-card input {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0e131d;
+  color: var(--text);
+  padding: 10px 12px;
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -73,6 +122,12 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .topbar h2 {

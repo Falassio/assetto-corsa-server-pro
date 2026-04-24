@@ -1,4 +1,13 @@
+const loginView = document.getElementById("loginView");
+const appShell = document.getElementById("appShell");
+const loginForm = document.getElementById("loginForm");
+const usernameInput = document.getElementById("usernameInput");
+const passwordInput = document.getElementById("passwordInput");
+const loginMessage = document.getElementById("loginMessage");
+
+const currentUser = document.getElementById("currentUser");
 const refreshBtn = document.getElementById("refreshBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 const saveConfigBtn = document.getElementById("saveConfigBtn");
 const configEditor = document.getElementById("configEditor");
 const actionResult = document.getElementById("actionResult");
@@ -12,6 +21,21 @@ const cpuValue = document.getElementById("cpuValue");
 const memoryValue = document.getElementById("memoryValue");
 const logsBox = document.getElementById("logsBox");
 const auditBox = document.getElementById("auditBox");
+
+const TOKEN_KEY = "acsp_token";
+let refreshTimer = null;
+
+function getToken() {
+  return localStorage.getItem(TOKEN_KEY) || "";
+}
+
+function setToken(token) {
+  if (!token) {
+    localStorage.removeItem(TOKEN_KEY);
+    return;
+  }
+  localStorage.setItem(TOKEN_KEY, token);
+}
 
 function formatUptime(seconds) {
   const h = Math.floor(seconds / 3600);
@@ -27,14 +51,34 @@ function formatUptime(seconds) {
 }
 
 async function api(path, options = {}) {
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  const token = getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
+    ...options,
+    headers
   });
 
+  if (response.status === 401) {
+    logout();
+    throw new Error("Session expired. Please sign in again.");
+  }
+
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `HTTP ${response.status}`);
+    let message = `HTTP ${response.status}`;
+    try {
+      const payload = await response.json();
+      message = payload.error || message;
+    } catch {
+      const text = await response.text();
+      if (text) {
+        message = text;
+      }
+    }
+    throw new Error(message);
   }
 
   return response.json();
@@ -105,15 +149,74 @@ async function refreshAll() {
   }
 }
 
+function showApp(user) {
+  loginView.classList.add("hidden");
+  appShell.classList.remove("hidden");
+  currentUser.textContent = `${user.username} (${user.role})`;
+  refreshAll();
+
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+  }
+  refreshTimer = setInterval(() => {
+    loadOverview().catch(() => {});
+    loadLogs().catch(() => {});
+  }, 10000);
+}
+
+function logout() {
+  setToken("");
+  appShell.classList.add("hidden");
+  loginView.classList.remove("hidden");
+  currentUser.textContent = "";
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
+async function login(username, password) {
+  const payload = await api("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ username, password }),
+    headers: {}
+  });
+  setToken(payload.token);
+  showApp(payload.user);
+}
+
+async function hydrateSession() {
+  const token = getToken();
+  if (!token) {
+    logout();
+    return;
+  }
+  try {
+    const user = await api("/api/auth/me");
+    showApp(user);
+  } catch {
+    logout();
+  }
+}
+
 refreshBtn.addEventListener("click", refreshAll);
+logoutBtn.addEventListener("click", logout);
 saveConfigBtn.addEventListener("click", saveConfig);
 
 document.querySelectorAll("button[data-action]").forEach((button) => {
   button.addEventListener("click", () => runAction(button.dataset.action));
 });
 
-refreshAll();
-setInterval(() => {
-  loadOverview().catch(() => {});
-  loadLogs().catch(() => {});
-}, 10000);
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginMessage.textContent = "Signing in...";
+  try {
+    await login(usernameInput.value.trim(), passwordInput.value);
+    passwordInput.value = "";
+    loginMessage.textContent = "Signed in.";
+  } catch (error) {
+    loginMessage.textContent = `Login failed: ${error.message}`;
+  }
+});
+
+hydrateSession();

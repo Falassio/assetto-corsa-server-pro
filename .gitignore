@@ -3,7 +3,7 @@ dist/
 *.log
 
 # local env files
-.env.local
+.env
 
 # local control plane data
 control-plane-data/

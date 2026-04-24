@@ -101,6 +101,9 @@ A full web control plane is included, with:
 - lifecycle actions (start, stop, restart, update, backup)
 - JSON config editor with save flow
 - live logs view and audit trail
+- login authentication with role-based access
+- env-driven credentials for single-tenant deployments
+- API rate limiting and secure headers
 - responsive layout for desktop and mobile
 
 Run it with:
@@ -116,6 +119,38 @@ http://localhost:3000
 ```
 
 Change panel port with `CONTROL_PANEL_PORT` in `.env`.
+
+Default login is configured with:
+
+- `CONTROL_PANEL_USERNAME`
+- `CONTROL_PANEL_PASSWORD`
+
+Change both before exposing the panel.
+
+Optional multi-user mode is available with `CONTROL_PANEL_USERS_JSON`.
+
+## Real action wiring
+
+By default the panel runs in `ACTION_MODE=mock`.
+
+To execute real actions on your own runtime, set:
+
+```env
+ACTION_MODE=command
+```
+
+And define commands in `.env`:
+
+```env
+ACTION_START_CMD=docker start assetto-corsa-server
+ACTION_STOP_CMD=docker stop assetto-corsa-server
+ACTION_RESTART_CMD=docker restart assetto-corsa-server
+ACTION_UPDATE_CMD=docker exec assetto-corsa-server /usr/local/bin/entrypoint.sh
+ACTION_BACKUP_CMD=tar -czf /data/backup-$(date +%Y%m%d%H%M%S).tgz /cfg /content /logs
+```
+
+Command mode runs shell commands from the API container context. Adjust commands to your environment.
+The control API compose stack mounts `/var/run/docker.sock` to allow Docker CLI commands.
 
 ## Dokploy deployment
 
@@ -191,6 +226,20 @@ Operational checklist: `docs/PRODUCTION-CHECKLIST.md`.
 - `AC_TCP_PORT` (default: `9600`)
 - `AC_UDP_PORT` (default: `9600`)
 - `HTTP_PORT` (default: `8081`)
+- `CONTROL_PANEL_PORT` (default: `3000`)
+- `AUTH_ENABLED` (`1`/`0`, default: `1`)
+- `CONTROL_PANEL_USERNAME` (default: `admin`)
+- `CONTROL_PANEL_PASSWORD` (default: `change-me-now`)
+- `CONTROL_PANEL_ROLE` (`admin`/`operator`/`viewer`, default: `admin`)
+- `CONTROL_PANEL_SESSION_SECRET` (set a long random value)
+- `CONTROL_PANEL_TOKEN_TTL_SEC` (default: `43200`)
+- `CONTROL_PANEL_RATE_LIMIT_RPM` (default: `120`)
+- `WEB_ORIGIN` (default: `*`, lock down in production)
+- `ALLOW_CONFIG_WRITE` (`1`/`0`, default: `1`)
+- `ACTION_MODE` (`mock`/`command`, default: `mock`)
+- `ACTION_TIMEOUT_MS` (default: `20000`)
+- `ACTION_START_CMD` / `ACTION_STOP_CMD` / `ACTION_RESTART_CMD`
+- `ACTION_UPDATE_CMD` / `ACTION_BACKUP_CMD`
 - `STEAMCMD_MAX_RETRIES` (default: `3`)
 - `STEAMCMD_RETRY_DELAY` (default: `5`)
 - `STEAM_VALIDATE` (`1`/`0`, default: `1`)
