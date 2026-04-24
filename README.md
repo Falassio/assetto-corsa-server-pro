@@ -8,44 +8,45 @@
 
 > The first Assetto Corsa Docker Image with native-like performance on ARM64 via Box86 integration.
 
-Assetto Corsa Server Pro is a production-ready Docker setup for the official dedicated server.
-It is built for reliability, low overhead, and easy deployment on modern hosting platforms like Dokploy.
+Assetto Corsa Server Pro is a production-ready container image for the official Assetto Corsa dedicated server.
+It focuses on three things: reliability, low overhead, and fast deployment on platforms like Dokploy.
 
-## Why this image exists
+## Why this project exists
 
-Most older Assetto Corsa Docker images share the same issues:
+Most legacy Assetto Corsa images have the same pain points:
 
-- no serious ARM64 support
-- oversized base images and unnecessary packages
-- fragile bootstrap scripts
-- server process running as root
+- no real ARM64 path
+- large base layers and unnecessary packages
+- fragile startup logic
+- root runtime in production
 
-This project fixes those points with a cleaner architecture and predictable startup behavior.
+This project fixes those issues with a modern, reproducible setup.
 
-## Highlights
+## What you get
 
 - `debian:bookworm-slim` base image
 - multi-architecture support (`linux/amd64`, `linux/arm64`)
-- automatic SteamCMD install/update on container startup (`AppID 244210`)
-- retry logic for SteamCMD updates (network-safe startup)
-- ARM64 runtime through Box86 for the original x86 server binary
-- non-root runtime user (`steam`)
+- automatic SteamCMD install/update at startup (`AppID 244210`)
+- retry logic for SteamCMD updates
+- ARM64 support via Box86 for the original x86 server binary
+- non-root runtime (`steam` user)
 - persistent volumes for config, content, and logs
-- built-in healthcheck and graceful shutdown window
-- hardened runtime (`no-new-privileges`, dropped Linux capabilities)
-- GitHub Actions pipeline for shell lint + multi-arch Docker build/publish
+- built-in healthcheck and graceful shutdown
+- hardened defaults (`no-new-privileges`, `cap_drop: ALL`)
+- CI pipeline for shell lint + multi-arch image build/publish
 - Dokploy-friendly `docker-compose.yml`
 
-## Project layout
+## Repository layout
 
-- `Dockerfile` - minimal multi-arch image build with ARM64 Box86 integration
-- `entrypoint.sh` - architecture detection, SteamCMD update, persistent directory linking, server start
-- `docker-compose.yml` - ready-to-run service definition with named volumes and required ports
-- `.env.example` - environment template with documented defaults
-- `scripts/preflight-env.sh` - environment validation before deploy
-- `RELEASE.md` - practical release and hotfix process
+- `Dockerfile`: multi-arch build with ARM64 Box86 integration
+- `entrypoint.sh`: arch detection, SteamCMD update, persistent path linking, server startup
+- `docker-compose.yml`: ready-to-run service with ports, volumes, and security settings
+- `.env.example`: environment template
+- `scripts/preflight-env.sh`: env validation before deployment
+- `RELEASE.md`: release and hotfix flow
+- `docs/PRODUCTION-CHECKLIST.md`: operational checklist for go-live
 
-## Exposed ports
+## Ports
 
 - `9600/tcp`
 - `9600/udp`
@@ -53,32 +54,39 @@ This project fixes those points with a cleaner architecture and predictable star
 
 ## Persistent data
 
-The container persists data in:
+The following paths are persisted through Docker volumes:
 
 - `/cfg`
 - `/content`
 - `/logs`
 
-At startup, `entrypoint.sh` links `/opt/ac-server/{cfg,content,logs}` to those persistent paths.
+At startup, `entrypoint.sh` links `/opt/ac-server/{cfg,content,logs}` to those paths.
 
 ## Quick start
 
-1. Copy the environment template:
+1. Create your env file:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Start the stack:
+2. Validate configuration:
 
 ```bash
 bash scripts/preflight-env.sh .env
 ```
 
-3. Start the stack:
+3. Start the service:
 
 ```bash
 docker compose up -d --build
+```
+
+4. Check status:
+
+```bash
+docker compose ps
+docker compose logs -f ac-server
 ```
 
 ## Dokploy deployment
@@ -86,9 +94,10 @@ docker compose up -d --build
 1. Create a new Docker Compose app in Dokploy.
 2. Point it to this repository.
 3. Use `docker-compose.yml` as compose file.
-4. Configure domain/network as needed and deploy.
+4. Set env values from `.env.example`.
+5. Deploy and wait for first SteamCMD sync.
 
-## Optional: build and publish multi-arch image
+## Build and publish (manual)
 
 ```bash
 docker buildx build \
@@ -97,54 +106,68 @@ docker buildx build \
   --push .
 ```
 
+For Docker Hub:
+
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t falassio/assetto-corsa-server-pro:latest \
+  --push .
+```
+
 ## CI/CD
 
-The repository ships with `.github/workflows/docker.yml`:
+Workflow: `.github/workflows/docker.yml`
 
 - runs ShellCheck on scripts
+- validates `.env.example`
 - builds `linux/amd64` and `linux/arm64` images on PRs
-- pushes to GHCR on `main` and on version tags (`v*`)
+- pushes images on `main` and version tags (`v*`)
 
 ## Release process
 
 - Versioning follows SemVer (`vMAJOR.MINOR.PATCH`)
-- Tagging a version (example `v1.0.0`) triggers a multi-arch image publish
-- Detailed release notes live in `CHANGELOG.md`
-- Full release runbook: `RELEASE.md`
+- tagging a version (example `v1.0.0`) triggers multi-arch publish
+- release notes are tracked in `CHANGELOG.md`
+- full release procedure is in `RELEASE.md`
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-## Production runbook
-
-For go-live and operations checklist, see `docs/PRODUCTION-CHECKLIST.md`.
-
-## Notes
-
-- First boot can take a few minutes because SteamCMD downloads the server files.
-- Subsequent boots apply incremental updates.
-- On ARM64, the startup script automatically switches to Box86.
-
-## Production defaults included
+## Production defaults
 
 - healthcheck based on live server process detection
 - log rotation (`10m`, 3 files)
 - `no-new-privileges` + `cap_drop: ALL`
 - retry and delay controls for SteamCMD
 
+Operational checklist: `docs/PRODUCTION-CHECKLIST.md`.
+
 ## Environment variables
 
+- `IMAGE_NAME` (default: `ghcr.io/falassio/assetto-corsa-server-pro:latest`)
+- `CONTAINER_NAME` (default: `assetto-corsa-server`)
 - `STEAM_APP_ID` (default: `244210`)
 - `AC_INSTALL_DIR` (default: `/opt/ac-server`)
 - `AC_SERVER_BIN` (default: `acServer`)
 - `AC_SERVER_ARGS` (default: empty)
+- `AC_TCP_PORT` (default: `9600`)
+- `AC_UDP_PORT` (default: `9600`)
+- `HTTP_PORT` (default: `8081`)
 - `STEAMCMD_MAX_RETRIES` (default: `3`)
 - `STEAMCMD_RETRY_DELAY` (default: `5`)
 - `STEAM_VALIDATE` (`1`/`0`, default: `1`)
 - `SKIP_UPDATE` (`1`/`0`, default: `0`)
 - `TZ` (example: `Europe/Rome`)
+
+## Notes
+
+- first boot may take several minutes due to SteamCMD download
+- next restarts apply incremental updates
+- ARM64 runtime automatically switches to Box86
+- if `docker` is not found locally, install Docker Desktop or use CI publishing
 
 ## Disclaimer
 
