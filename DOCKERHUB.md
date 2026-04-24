@@ -15,7 +15,7 @@ Key points:
 - lightweight base image (`debian:bookworm-slim`)
 - multi-arch support (`linux/amd64`, `linux/arm64`)
 - ARM64 support through Box86 for the original x86 server binary
-- automatic SteamCMD update/install at startup (`AppID 244210`)
+- automatic SteamCMD update/install at startup (`AppID 302550`)
 - non-root runtime user (`steam`)
 - persistent data paths for `/cfg`, `/content`, `/logs`
 - optional web control panel with auth and RBAC

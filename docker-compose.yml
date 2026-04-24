@@ -4,12 +4,15 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        STEAM_APP_ID: ${STEAM_APP_ID:-244210}
+        STEAM_APP_ID: ${STEAM_APP_ID:-302550}
     image: ${IMAGE_NAME:-ghcr.io/falassio/assetto-corsa-server-pro:latest}
     container_name: ${CONTAINER_NAME:-assetto-corsa-server}
     environment:
       TZ: ${TZ:-Europe/Rome}
-      STEAM_APP_ID: ${STEAM_APP_ID:-244210}
+      STEAM_APP_ID: ${STEAM_APP_ID:-302550}
+      STEAM_USERNAME: ${STEAM_USERNAME:-}
+      STEAM_PASSWORD: ${STEAM_PASSWORD:-}
+      STEAM_GUARD_CODE: ${STEAM_GUARD_CODE:-}
       AC_INSTALL_DIR: ${AC_INSTALL_DIR:-/opt/ac-server}
       AC_SERVER_BIN: ${AC_SERVER_BIN:-acServer}
       AC_SERVER_ARGS: ${AC_SERVER_ARGS:-}

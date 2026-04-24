@@ -7,7 +7,7 @@ set -Eeuo pipefail
 # - collega le directory persistenti richieste (/cfg, /content, /logs)
 
 STEAMCMD_DIR="${STEAMCMD_DIR:-/opt/steamcmd}"
-STEAM_APP_ID="${STEAM_APP_ID:-244210}"
+STEAM_APP_ID="${STEAM_APP_ID:-302550}"
 AC_INSTALL_DIR="${AC_INSTALL_DIR:-/opt/ac-server}"
 AC_SERVER_BIN="${AC_SERVER_BIN:-acServer}"
 STEAMCMD_MAX_RETRIES="${STEAMCMD_MAX_RETRIES:-3}"
@@ -15,6 +15,9 @@ STEAMCMD_RETRY_DELAY="${STEAMCMD_RETRY_DELAY:-5}"
 STEAM_VALIDATE="${STEAM_VALIDATE:-1}"
 SKIP_UPDATE="${SKIP_UPDATE:-0}"
 STEAMCMD_ALLOW_FAILURE_IF_INSTALLED="${STEAMCMD_ALLOW_FAILURE_IF_INSTALLED:-1}"
+STEAM_USERNAME="${STEAM_USERNAME:-}"
+STEAM_PASSWORD="${STEAM_PASSWORD:-}"
+STEAM_GUARD_CODE="${STEAM_GUARD_CODE:-}"
 AC_SERVER_ARGS="${AC_SERVER_ARGS:-}"
 
 CFG_DIR="/cfg"
@@ -76,13 +79,29 @@ update_server() {
   local steamcmd_x86="${STEAMCMD_DIR}/linux32/steamcmd"
   local attempt=1
   local server_path="${AC_INSTALL_DIR}/${AC_SERVER_BIN}"
+  local steam_login_args=()
   local steam_args=(
     +@ShutdownOnFailedCommand 1
     +@NoPromptForPassword 1
     +force_install_dir "${AC_INSTALL_DIR}"
-    +login anonymous
-    +app_update "${STEAM_APP_ID}"
   )
+
+  if [[ -n "${STEAM_USERNAME}" || -n "${STEAM_PASSWORD}" ]]; then
+    [[ -n "${STEAM_USERNAME}" ]] || die "STEAM_USERNAME mancante: imposta username/password Steam o usa login anonymous"
+    [[ -n "${STEAM_PASSWORD}" ]] || die "STEAM_PASSWORD mancante: imposta username/password Steam o usa login anonymous"
+
+    if [[ -n "${STEAM_GUARD_CODE}" ]]; then
+      steam_login_args+=(+set_steam_guard_code "${STEAM_GUARD_CODE}")
+    fi
+    steam_login_args+=(+login "${STEAM_USERNAME}" "${STEAM_PASSWORD}")
+    log "SteamCMD user login configurato (STEAM_USERNAME)"
+  else
+    steam_login_args+=(+login anonymous)
+    log "SteamCMD anonymous login"
+  fi
+
+  steam_args+=("${steam_login_args[@]}")
+  steam_args+=(+app_update "${STEAM_APP_ID}")
 
   if [[ "${SKIP_UPDATE}" == "1" ]]; then
     log "SKIP_UPDATE=1: salto aggiornamento SteamCMD"

@@ -15,7 +15,7 @@ Assetto Corsa Server Pro is a production-ready Docker stack for the official Ass
 - `debian:bookworm-slim` base for low image size
 - `linux/amd64` and `linux/arm64` support
 - ARM64 execution through Box86 for the original x86 server binary
-- automatic SteamCMD update flow at startup (AppID `244210`)
+- automatic SteamCMD update flow at startup (AppID `302550`)
 - non-root runtime user (`steam`)
 - persistent storage for `/cfg`, `/content`, `/logs`
 - hardened compose defaults (`no-new-privileges`, dropped caps, healthcheck)

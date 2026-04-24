@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim
 
 ARG TARGETARCH
-ARG STEAM_APP_ID=244210
+ARG STEAM_APP_ID=302550
 
 LABEL org.opencontainers.image.title="Assetto Corsa Server Pro"
 LABEL org.opencontainers.image.description="Lightweight, multi-arch Assetto Corsa dedicated server image"
