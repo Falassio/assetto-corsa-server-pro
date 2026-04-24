@@ -13,13 +13,15 @@ services:
       STEAM_USERNAME: ${STEAM_USERNAME:-}
       STEAM_PASSWORD: ${STEAM_PASSWORD:-}
       STEAM_GUARD_CODE: ${STEAM_GUARD_CODE:-}
+      BOX86_DYNAREC: ${BOX86_DYNAREC:-0}
+      BOX86_NOSIGSEGV: ${BOX86_NOSIGSEGV:-1}
       AC_INSTALL_DIR: ${AC_INSTALL_DIR:-/opt/ac-server}
       AC_SERVER_BIN: ${AC_SERVER_BIN:-acServer}
       AC_SERVER_ARGS: ${AC_SERVER_ARGS:-}
       STEAMCMD_MAX_RETRIES: ${STEAMCMD_MAX_RETRIES:-3}
       STEAMCMD_RETRY_DELAY: ${STEAMCMD_RETRY_DELAY:-5}
       STEAM_VALIDATE: ${STEAM_VALIDATE:-1}
-      SKIP_UPDATE: ${SKIP_UPDATE:-0}
+      SKIP_UPDATE: ${SKIP_UPDATE:-1}
       STEAMCMD_ALLOW_FAILURE_IF_INSTALLED: ${STEAMCMD_ALLOW_FAILURE_IF_INSTALLED:-1}
     ports:
       - "${AC_TCP_PORT:-9600}:9600/tcp"
@@ -29,12 +31,10 @@ services:
       - ac_cfg:/cfg
       - ac_content:/content
       - ac_logs:/logs
+      - ac_steam:/home/steam/Steam
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
-    tmpfs:
-      - /tmp:rw,noexec,nosuid,size=64m
+      - seccomp=unconfined
     healthcheck:
       test: ["CMD", "/usr/local/bin/healthcheck.sh"]
       interval: 30s
@@ -56,3 +56,5 @@ volumes:
     name: ac-server-content
   ac_logs:
     name: ac-server-logs
+  ac_steam:
+    name: ac-server-steam
