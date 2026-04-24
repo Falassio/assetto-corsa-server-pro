@@ -1,36 +1,38 @@
-# Docker Hub Listing
+# Docker Hub Listing Pack
 
-Use this content when configuring the Docker Hub repository page.
+Use this content for the Docker Hub repository page.
 
 ## Short description
 
-Production-ready Assetto Corsa dedicated server image with amd64 + arm64 support and Box86 acceleration.
+Production-ready Assetto Corsa dedicated server image with `amd64` + `arm64` support and Box86 integration.
 
 ## Full description
 
-Assetto Corsa Server Pro is a production-ready Docker image for hosting the official Assetto Corsa dedicated server.
+Assetto Corsa Server Pro provides a practical, production-focused Docker setup for the official Assetto Corsa dedicated server.
 
-Highlights:
+Key points:
 
-- Lightweight base image (`debian:bookworm-slim`)
-- Multi-arch support (`linux/amd64`, `linux/arm64`)
-- ARM64 compatibility via Box86 for the original x86 binary
-- Automatic SteamCMD install/update on startup (AppID `244210`)
-- Non-root runtime (`steam` user)
-- Persistent data volumes for `/cfg`, `/content`, and `/logs`
-- Hardened runtime defaults and built-in healthcheck
-- Ready for Dokploy and GitHub Actions CI/CD
+- lightweight base image (`debian:bookworm-slim`)
+- multi-arch support (`linux/amd64`, `linux/arm64`)
+- ARM64 support through Box86 for the original x86 server binary
+- automatic SteamCMD update/install at startup (`AppID 244210`)
+- non-root runtime user (`steam`)
+- persistent data paths for `/cfg`, `/content`, `/logs`
+- optional web control panel with auth and RBAC
+- ready for Dokploy and CI-based image publishing
 
-Source and docs:
+Project links:
 
 - GitHub: https://github.com/Falassio/assetto-corsa-server-pro
 - GHCR: https://ghcr.io/falassio/assetto-corsa-server-pro
 
-## Recommended category
+## Recommended categories
+
+Primary:
 
 - `Networking`
 
-Optional additional categories:
+Optional:
 
 - `Developer tools`
 - `Integration & delivery`

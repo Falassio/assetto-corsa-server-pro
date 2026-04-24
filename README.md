@@ -6,180 +6,109 @@
 [![License](https://img.shields.io/github/license/Falassio/assetto-corsa-server-pro)](https://github.com/Falassio/assetto-corsa-server-pro/blob/main/LICENSE)
 [![GHCR](https://img.shields.io/badge/registry-ghcr.io-blue)](https://ghcr.io/falassio/assetto-corsa-server-pro)
 
-> The first Assetto Corsa Docker Image with native-like performance on ARM64 via Box86 integration.
+> The first Assetto Corsa Docker image with native-like ARM64 performance via Box86 integration.
 
-Assetto Corsa Server Pro is a production-ready container image for the official Assetto Corsa dedicated server.
-It focuses on three things: reliability, low overhead, and fast deployment on platforms like Dokploy.
+Assetto Corsa Server Pro is a production-ready Docker stack for the official Assetto Corsa dedicated server. It is designed for repeatable deployments, lightweight runtime, and practical operations on both `amd64` and `arm64`.
 
-## Why this project exists
+## Why this image
 
-Most legacy Assetto Corsa images have the same pain points:
+- `debian:bookworm-slim` base for low image size
+- `linux/amd64` and `linux/arm64` support
+- ARM64 execution through Box86 for the original x86 server binary
+- automatic SteamCMD update flow at startup (AppID `244210`)
+- non-root runtime user (`steam`)
+- persistent storage for `/cfg`, `/content`, `/logs`
+- hardened compose defaults (`no-new-privileges`, dropped caps, healthcheck)
+- optional web control panel with auth and RBAC
 
-- no real ARM64 path
-- large base layers and unnecessary packages
-- fragile startup logic
-- root runtime in production
+## Product roadmap delivered
 
-This project fixes those issues with a modern, reproducible setup.
-
-## What you get
-
-- `debian:bookworm-slim` base image
-- multi-architecture support (`linux/amd64`, `linux/arm64`)
-- automatic SteamCMD install/update at startup (`AppID 244210`)
-- retry logic for SteamCMD updates
-- ARM64 support via Box86 for the original x86 server binary
-- non-root runtime (`steam` user)
-- persistent volumes for config, content, and logs
-- built-in healthcheck and graceful shutdown
-- hardened defaults (`no-new-privileges`, `cap_drop: ALL`)
-- CI pipeline for shell lint + multi-arch image build/publish
-- Dokploy-friendly `docker-compose.yml`
+- MVP data: online players, lap ingestion, base leaderboard
+- Realtime: WebSocket live updates + public widget endpoint
+- Competitive: seasonal ranking + player profiles
+- Ops: alert webhook hook, backup verification, canary status endpoint
 
 ## Repository layout
 
-- `Dockerfile`: multi-arch build with ARM64 Box86 integration
-- `entrypoint.sh`: arch detection, SteamCMD update, persistent path linking, server startup
-- `docker-compose.yml`: ready-to-run service with ports, volumes, and security settings
-- `.env.example`: environment template
-- `scripts/preflight-env.sh`: env validation before deployment
-- `RELEASE.md`: release and hotfix flow
-- `docs/PRODUCTION-CHECKLIST.md`: operational checklist for go-live
-- `DOCKERHUB.md`: ready-to-paste Docker Hub listing content
-- `apps/api`: control plane API
-- `apps/web`: professional control panel UI
+- `Dockerfile`: game server image
+- `entrypoint.sh`: update/install/start orchestration
+- `docker-compose.yml`: game server stack
 - `docker-compose.control-plane.yml`: control panel stack
+- `apps/api`: control API (auth, actions, audit)
+- `apps/web`: control panel UI
+- `.env.example`: local baseline env
+- `.env.production.example`: production baseline env
+- `scripts/preflight-env.sh`: env validation
+- `docs/PRODUCTION-CHECKLIST.md`: go-live runbook
+- `DOCKERHUB.md`: Docker Hub listing copy
 
 ## Ports
 
-- `9600/tcp`
-- `9600/udp`
-- `8081/tcp`
-
-## Persistent data
-
-The following paths are persisted through Docker volumes:
-
-- `/cfg`
-- `/content`
-- `/logs`
-
-At startup, `entrypoint.sh` links `/opt/ac-server/{cfg,content,logs}` to those paths.
+- `9600/tcp` game port
+- `9600/udp` game port
+- `8081/tcp` HTTP/management port
+- `3000/tcp` control panel (default, configurable)
 
 ## Quick start
 
-1. Create your env file:
+1) Create local env:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Validate configuration:
+2) Validate env:
 
 ```bash
 bash scripts/preflight-env.sh .env
 ```
 
-3. Start the service:
+3) Build and run game server:
 
 ```bash
 docker compose up -d --build
 ```
 
-Production setup template:
-
-```bash
-cp .env.production.example .env
-```
-
-4. Check status:
+4) Check status:
 
 ```bash
 docker compose ps
 docker compose logs -f ac-server
 ```
 
-## Control panel (professional UI)
+## Production rollout
 
-A full web control plane is included, with:
-
-- real-time server overview (status, uptime, host, cpu, memory)
-- lifecycle actions (start, stop, restart, update, backup)
-- JSON config editor with save flow
-- live logs view and audit trail
-- login authentication with role-based access
-- env-driven credentials for single-tenant deployments
-- API rate limiting and secure headers
-- responsive layout for desktop and mobile
-
-Run it with:
-
-```bash
-docker compose -f docker-compose.control-plane.yml up -d --build
-```
-
-Then open:
-
-```text
-http://localhost:3000
-```
-
-Change panel port with `CONTROL_PANEL_PORT` in `.env`.
-
-Default login is configured with:
-
-- `CONTROL_PANEL_USERNAME`
-- `CONTROL_PANEL_PASSWORD`
-
-Change both before exposing the panel.
-
-Optional multi-user mode is available with `CONTROL_PANEL_USERS_JSON`.
-
-## Real action wiring
-
-By default the panel runs in `ACTION_MODE=mock`.
-
-To execute real actions on your own runtime, set:
-
-```env
-ACTION_MODE=command
-```
-
-And define commands in `.env`:
-
-```env
-ACTION_START_CMD=docker start assetto-corsa-server
-ACTION_STOP_CMD=docker stop assetto-corsa-server
-ACTION_RESTART_CMD=docker restart assetto-corsa-server
-ACTION_UPDATE_CMD=docker exec assetto-corsa-server /usr/local/bin/entrypoint.sh
-ACTION_BACKUP_CMD=tar -czf /data/backup-$(date +%Y%m%d%H%M%S).tgz /cfg /content /logs
-```
-
-Command mode runs shell commands from the API container context. Adjust commands to your environment.
-The control API compose stack mounts `/var/run/docker.sock` to allow Docker CLI commands.
-
-## Production rollout commands
-
-1) Prepare env and validate:
+1) Use production template:
 
 ```bash
 cp .env.production.example .env
+```
+
+2) Set secure values in `.env`:
+
+- `CONTROL_PANEL_PASSWORD`
+- `CONTROL_PANEL_SESSION_SECRET`
+- `WEB_ORIGIN`
+
+3) Validate:
+
+```bash
 bash scripts/preflight-env.sh .env
 ```
 
-2) Start game server:
+4) Start game server:
 
 ```bash
 docker compose up -d --build
 ```
 
-3) Start control panel:
+5) Start control plane:
 
 ```bash
 docker compose -f docker-compose.control-plane.yml up -d --build
 ```
 
-4) Verify:
+6) Verify both stacks:
 
 ```bash
 docker compose ps
@@ -188,15 +117,153 @@ docker compose logs -f ac-server
 docker compose -f docker-compose.control-plane.yml logs -f api web
 ```
 
-## Dokploy deployment
+For a complete operational checklist, use `docs/PRODUCTION-CHECKLIST.md`.
 
-1. Create a new Docker Compose app in Dokploy.
-2. Point it to this repository.
-3. Use `docker-compose.yml` as compose file.
-4. Set env values from `.env.example`.
-5. Deploy and wait for first SteamCMD sync.
+## Control panel
 
-## Build and publish (manual)
+The control panel includes:
+
+- login and role-based permissions (`admin`, `operator`, `viewer`)
+- live overview (status, uptime, host, cpu, memory)
+- server actions (start, stop, restart, update, backup)
+- config editor
+- logs and audit trail
+- online players table
+- base leaderboard and seasonal ranking panels
+- player profile lookup
+- backup verification + canary status panel
+
+Default URL:
+
+```text
+http://localhost:3000
+```
+
+Configure with `CONTROL_PANEL_PORT`.
+
+### Auth model
+
+Single-user mode:
+
+- `CONTROL_PANEL_USERNAME`
+- `CONTROL_PANEL_PASSWORD`
+- `CONTROL_PANEL_ROLE`
+
+Optional multi-user mode:
+
+- `CONTROL_PANEL_USERS_JSON`
+
+If `CONTROL_PANEL_USERS_JSON` is set, it overrides the single-user variables.
+
+## Real action wiring
+
+By default, control actions run in safe mock mode:
+
+```env
+ACTION_MODE=mock
+```
+
+To run real commands:
+
+```env
+ACTION_MODE=command
+ACTION_START_CMD="docker start assetto-corsa-server"
+ACTION_STOP_CMD="docker stop assetto-corsa-server"
+ACTION_RESTART_CMD="docker restart assetto-corsa-server"
+ACTION_UPDATE_CMD="docker exec assetto-corsa-server /usr/local/bin/entrypoint.sh"
+ACTION_BACKUP_CMD="tar -czf /data/backup-$(date +%Y%m%d%H%M%S).tgz /cfg /content /logs"
+```
+
+The API stack mounts `/var/run/docker.sock` to support Docker CLI commands in command mode.
+
+## Public endpoints and widget
+
+Public API endpoints (no auth):
+
+- `/public/online`
+- `/public/leaderboard`
+- `/public/ranking`
+
+Widget script:
+
+- `/widget/online.js?id=acsp-widget`
+
+Example embed:
+
+```html
+<div id="acsp-widget"></div>
+<script src="https://your-domain/widget/online.js?id=acsp-widget"></script>
+```
+
+## Telemetry and ranking APIs
+
+Authenticated telemetry endpoints:
+
+- `POST /api/telemetry/online`
+- `POST /api/telemetry/lap`
+
+Ranking endpoints:
+
+- `GET /api/leaderboard/base`
+- `GET /api/ranking/seasonal`
+- `GET /api/profiles/:playerId`
+
+Ops endpoints:
+
+- `GET /api/backups`
+- `POST /api/backups/verify`
+- `GET /api/ops/canary`
+
+## Dokploy test checklist
+
+After deploy on Dokploy, run this minimum acceptance flow:
+
+1. Login to control panel and verify overview updates.
+2. Trigger `start`, `restart`, `backup` and confirm audit entries.
+3. Push telemetry sample and verify tables update.
+4. Check public endpoints from browser.
+5. Verify WebSocket updates by opening two panel tabs.
+
+Sample telemetry commands:
+
+```bash
+TOKEN="<your_jwt>"
+
+curl -X POST "https://your-domain/api/telemetry/online" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"players":[{"playerId":"steam_1","name":"Falassio","car":"ks_ferrari_488_gt3","track":"monza"}]}'
+
+curl -X POST "https://your-domain/api/telemetry/lap" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"playerId":"steam_1","playerName":"Falassio","track":"monza","car":"ks_ferrari_488_gt3","lapTimeMs":111234,"valid":true}'
+```
+
+## ARM64 SteamCMD behavior
+
+On some ARM64 hosts, SteamCMD may complete work but still exit non-zero during bootstrap. This image handles that case with:
+
+- `STEAMCMD_ALLOW_FAILURE_IF_INSTALLED=1`
+
+When enabled, startup continues if the server binary is already present.
+
+## CI/CD
+
+Workflow: `.github/workflows/docker.yml`
+
+- ShellCheck + env validation on CI
+- multi-arch build for `amd64` and `arm64`
+- image publish to GHCR and Docker Hub on `main` and `v*` tags
+
+Docker Hub secrets required in GitHub:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
+## Manual publish
+
+GHCR:
 
 ```bash
 docker buildx build \
@@ -205,7 +272,7 @@ docker buildx build \
   --push .
 ```
 
-For Docker Hub:
+Docker Hub:
 
 ```bash
 docker buildx build \
@@ -214,88 +281,8 @@ docker buildx build \
   --push .
 ```
 
-## CI/CD
+## License and notice
 
-Workflow: `.github/workflows/docker.yml`
+Licensed under MIT (`LICENSE`).
 
-- runs ShellCheck on scripts
-- validates `.env.example`
-- builds `linux/amd64` and `linux/arm64` images on PRs
-- pushes images to GHCR and Docker Hub on `main` and version tags (`v*`)
-
-Required repository secrets for Docker Hub publishing:
-
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
-
-Create token: Docker Hub -> Account Settings -> Personal access tokens.
-
-## Release process
-
-- Versioning follows SemVer (`vMAJOR.MINOR.PATCH`)
-- tagging a version (example `v1.0.0`) triggers multi-arch publish
-- release notes are tracked in `CHANGELOG.md`
-- full release procedure is in `RELEASE.md`
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-## Production defaults
-
-- healthcheck based on live server process detection
-- log rotation (`10m`, 3 files)
-- `no-new-privileges` + `cap_drop: ALL`
-- retry and delay controls for SteamCMD
-
-Operational checklist: `docs/PRODUCTION-CHECKLIST.md`.
-
-## Environment variables
-
-- `IMAGE_NAME` (default: `ghcr.io/falassio/assetto-corsa-server-pro:latest`)
-- `CONTAINER_NAME` (default: `assetto-corsa-server`)
-- `STEAM_APP_ID` (default: `244210`)
-- `AC_INSTALL_DIR` (default: `/opt/ac-server`)
-- `AC_SERVER_BIN` (default: `acServer`)
-- `AC_SERVER_ARGS` (default: empty)
-- `AC_TCP_PORT` (default: `9600`)
-- `AC_UDP_PORT` (default: `9600`)
-- `HTTP_PORT` (default: `8081`)
-- `CONTROL_PANEL_PORT` (default: `3000`)
-- `AUTH_ENABLED` (`1`/`0`, default: `1`)
-- `CONTROL_PANEL_USERNAME` (default: `admin`)
-- `CONTROL_PANEL_PASSWORD` (default: `change-me-now`)
-- `CONTROL_PANEL_ROLE` (`admin`/`operator`/`viewer`, default: `admin`)
-- `CONTROL_PANEL_SESSION_SECRET` (set a long random value)
-- `CONTROL_PANEL_TOKEN_TTL_SEC` (default: `43200`)
-- `CONTROL_PANEL_RATE_LIMIT_RPM` (default: `120`)
-- `WEB_ORIGIN` (default: `*`, lock down in production)
-- `ALLOW_CONFIG_WRITE` (`1`/`0`, default: `1`)
-- `ACTION_MODE` (`mock`/`command`, default: `mock`)
-- `ACTION_TIMEOUT_MS` (default: `20000`)
-- `ACTION_START_CMD` / `ACTION_STOP_CMD` / `ACTION_RESTART_CMD`
-- `ACTION_UPDATE_CMD` / `ACTION_BACKUP_CMD`
-- `STEAMCMD_MAX_RETRIES` (default: `3`)
-- `STEAMCMD_RETRY_DELAY` (default: `5`)
-- `STEAM_VALIDATE` (`1`/`0`, default: `1`)
-- `STEAMCMD_ALLOW_FAILURE_IF_INSTALLED` (`1`/`0`, default: `1`)
-- `SKIP_UPDATE` (`1`/`0`, default: `0`)
-- `TZ` (example: `Europe/Rome`)
-
-## Notes
-
-- first boot may take several minutes due to SteamCMD download
-- next restarts apply incremental updates
-- ARM64 runtime automatically switches to Box86
-- if `docker` is not found locally, install Docker Desktop or use CI publishing
-
-### ARM64 SteamCMD note
-
-On some ARM64 hosts, SteamCMD can finish installation but still return a non-zero exit with a bootstrapper assertion.
-This image tolerates that case when `STEAMCMD_ALLOW_FAILURE_IF_INSTALLED=1` and the server binary already exists.
-
-## Disclaimer
-
-This repository provides containerization and automation only.
-Assetto Corsa Dedicated Server binaries and assets remain subject to their original licenses.
+This repository ships containerization and automation only. Assetto Corsa binaries and assets remain subject to their original licenses.

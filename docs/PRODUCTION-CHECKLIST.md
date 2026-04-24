@@ -1,58 +1,78 @@
 # Production Checklist
 
-Use this checklist before and after go-live on Dokploy.
+Use this checklist for go-live and routine operations.
 
-## 1) Pre-deploy
+## 1) Before deployment
 
-- Confirm DNS, firewall, and host port availability (`9600/tcp`, `9600/udp`, `8081/tcp`).
-- Confirm storage class/volume mapping for persistent data (`/cfg`, `/content`, `/logs`).
-- Copy `.env.example` to `.env` and review all values.
-- Decide update policy:
-  - `SKIP_UPDATE=0` for automatic updates on restart
-  - `SKIP_UPDATE=1` for pinned runtime windows
-- Keep `STEAM_VALIDATE=1` on first install; optionally set `0` later for faster restarts.
+- Confirm host ports are open: `9600/tcp`, `9600/udp`, `8081/tcp`, panel port.
+- Confirm persistent storage for `/cfg`, `/content`, `/logs`.
+- Create `.env` from `.env.production.example`.
+- Set strong values for:
+  - `CONTROL_PANEL_PASSWORD`
+  - `CONTROL_PANEL_SESSION_SECRET`
+  - `WEB_ORIGIN`
+- Validate config with:
 
-## 2) First deploy
+```bash
+bash scripts/preflight-env.sh .env
+```
 
-- Deploy using `docker-compose.yml` in Dokploy.
-- Wait for first SteamCMD sync (can take several minutes).
-- Check service health status and container logs.
-- Verify game visibility/reachability from external clients.
+## 2) First deployment
+
+- Start game server stack:
+
+```bash
+docker compose up -d --build
+```
+
+- Start control plane stack:
+
+```bash
+docker compose -f docker-compose.control-plane.yml up -d --build
+```
+
+- Verify health and logs:
+
+```bash
+docker compose ps
+docker compose -f docker-compose.control-plane.yml ps
+docker compose logs -f ac-server
+docker compose -f docker-compose.control-plane.yml logs -f api web
+```
 
 ## 3) Post-deploy validation
 
-- Ensure healthcheck remains `healthy` for at least 15 minutes.
-- Confirm files persist after a container restart:
-  - config in `/cfg`
-  - content in `/content`
-  - logs in `/logs`
-- Confirm restart behavior (graceful stop within configured grace period).
+- Confirm server is reachable from external clients.
+- Confirm control panel login works with configured credentials.
+- Confirm action buttons work as expected for your `ACTION_MODE`.
+- Restart containers once and verify data persists.
 
-## 4) Backup strategy
+## 4) Security baseline
 
-- Back up volume data at least daily (`/cfg`, `/content`, `/logs`).
-- Keep at least one off-host backup copy.
-- Test restoration monthly in a staging environment.
+- Keep `AUTH_ENABLED=1`.
+- Restrict `WEB_ORIGIN` to your panel domain.
+- Keep least privilege defaults enabled in compose.
+- Do not expose Docker socket publicly.
+- Keep host OS and Docker runtime patched.
 
-## 5) Update and rollback strategy
+## 5) Update and rollback
 
-- Update by deploying a new immutable image tag.
-- Keep the previous known-good tag available for rollback.
-- Rollback plan:
-  1. Switch to previous image tag
-  2. Redeploy
-  3. Verify health and connectivity
+- Deploy immutable image tags for releases.
+- Keep the previous known-good tag available.
+- Rollback path:
+  1. switch image tag to previous stable version
+  2. redeploy
+  3. verify health and connectivity
 
-## 6) Monitoring and operations
+## 6) Backups and retention
 
-- Alert on container unhealthy state.
+- Back up `/cfg`, `/content`, `/logs` at least daily.
+- Keep one off-host copy.
+- Test restore monthly.
+
+## 7) Monitoring essentials
+
+- Alert on unhealthy status.
 - Alert on restart loops.
-- Track disk growth for `/logs` and content volume.
-- Review logs after every deploy and after each restart event.
-
-## 7) Security baseline
-
-- Keep compose hardening enabled (`no-new-privileges`, dropped capabilities).
-- Do not run the service as root.
-- Restrict inbound access to only required ports.
-- Keep host OS and Docker runtime updated.
+- Track disk usage growth for logs and content.
+- Review audit log after config or action changes.

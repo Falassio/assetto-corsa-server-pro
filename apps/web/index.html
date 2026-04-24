@@ -34,8 +34,12 @@
         </div>
         <nav>
           <a href="#overview">Overview</a>
+          <a href="#online">Online</a>
+          <a href="#leaderboard">Leaderboard</a>
+          <a href="#season">Season Ranking</a>
           <a href="#controls">Controls</a>
           <a href="#config">Config</a>
+          <a href="#ops">Ops</a>
           <a href="#logs">Logs</a>
           <a href="#audit">Audit</a>
         </nav>
@@ -93,12 +97,49 @@
           <p class="muted" id="actionResult">No action executed yet.</p>
         </section>
 
+        <section id="online" class="panel">
+          <h3>Online Players</h3>
+          <div id="onlinePlayers" class="table-wrap"></div>
+        </section>
+
+        <section id="leaderboard" class="panel">
+          <h3>Base Leaderboard</h3>
+          <div class="actions">
+            <input id="lbTrack" placeholder="Track (optional)" />
+            <input id="lbCar" placeholder="Car (optional)" />
+            <button id="loadLeaderboardBtn" class="btn">Load Leaderboard</button>
+          </div>
+          <div id="leaderboardTable" class="table-wrap"></div>
+        </section>
+
+        <section id="season" class="panel">
+          <h3>Season Ranking</h3>
+          <div class="actions">
+            <input id="seasonInput" placeholder="Season (e.g. 2026-S1)" />
+            <button id="loadSeasonBtn" class="btn">Load Ranking</button>
+            <input id="profileInput" placeholder="Player ID" />
+            <button id="loadProfileBtn" class="btn">Load Profile</button>
+          </div>
+          <div id="seasonTable" class="table-wrap"></div>
+          <pre id="profileBox"></pre>
+        </section>
+
         <section id="config" class="panel">
           <h3>Server Config (JSON)</h3>
           <textarea id="configEditor" spellcheck="false"></textarea>
           <div class="actions">
             <button id="saveConfigBtn" class="btn success">Save Config</button>
           </div>
+        </section>
+
+        <section id="ops" class="panel">
+          <h3>Ops</h3>
+          <div class="actions">
+            <input id="backupPathInput" placeholder="Backup file path to verify" />
+            <button id="verifyBackupBtn" class="btn">Verify Backup</button>
+            <button id="loadCanaryBtn" class="btn">Canary Status</button>
+          </div>
+          <pre id="opsBox"></pre>
         </section>
 
         <section id="logs" class="panel">

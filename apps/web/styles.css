@@ -238,6 +238,40 @@ pre {
   font-size: 13px;
 }
 
+input {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0e131d;
+  color: var(--text);
+  padding: 10px 12px;
+}
+
+.table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #1f2a3a;
+  text-align: left;
+}
+
+th {
+  color: #95a8c5;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 11px;
+}
+
 textarea {
   min-height: 220px;
   resize: vertical;

@@ -22,8 +22,26 @@ const memoryValue = document.getElementById("memoryValue");
 const logsBox = document.getElementById("logsBox");
 const auditBox = document.getElementById("auditBox");
 
+const onlinePlayers = document.getElementById("onlinePlayers");
+const leaderboardTable = document.getElementById("leaderboardTable");
+const seasonTable = document.getElementById("seasonTable");
+const profileBox = document.getElementById("profileBox");
+const opsBox = document.getElementById("opsBox");
+
+const lbTrack = document.getElementById("lbTrack");
+const lbCar = document.getElementById("lbCar");
+const loadLeaderboardBtn = document.getElementById("loadLeaderboardBtn");
+const seasonInput = document.getElementById("seasonInput");
+const loadSeasonBtn = document.getElementById("loadSeasonBtn");
+const profileInput = document.getElementById("profileInput");
+const loadProfileBtn = document.getElementById("loadProfileBtn");
+const backupPathInput = document.getElementById("backupPathInput");
+const verifyBackupBtn = document.getElementById("verifyBackupBtn");
+const loadCanaryBtn = document.getElementById("loadCanaryBtn");
+
 const TOKEN_KEY = "acsp_token";
 let refreshTimer = null;
+let ws = null;
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY) || "";
@@ -48,6 +66,22 @@ function formatUptime(seconds) {
     return `${m}m ${s}s`;
   }
   return `${s}s`;
+}
+
+function formatMs(ms) {
+  if (!Number.isFinite(ms) || ms <= 0) {
+    return "-";
+  }
+  const totalSeconds = ms / 1000;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = (totalSeconds % 60).toFixed(3).padStart(6, "0");
+  return `${minutes}:${seconds}`;
+}
+
+function tableHtml(headers, rows) {
+  const thead = `<thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead>`;
+  const tbody = `<tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}</tbody>`;
+  return `<table>${thead}${tbody}</table>`;
 }
 
 async function api(path, options = {}) {
@@ -96,7 +130,7 @@ async function loadOverview() {
   uptimeValue.textContent = formatUptime(overview.uptimeSeconds || 0);
   playersValue.textContent = String(overview.players || 0);
   maxPlayersValue.textContent = String(overview.maxPlayers || 0);
-  hostValue.textContent = overview.host || "-";
+  hostValue.textContent = `${overview.host || "-"} (${overview.release?.channel || "stable"})`;
   cpuValue.textContent = String(overview.cpuLoad1m || 0);
   memoryValue.textContent = `${overview.memory.freeMb || 0} / ${overview.memory.totalMb || 0} MB free`;
 }
@@ -107,14 +141,68 @@ async function loadConfig() {
 }
 
 async function loadLogs() {
-  const payload = await api("/api/logs?lines=300");
+  const payload = await api("/api/logs?lines=250");
   logsBox.textContent = payload.lines.join("\n");
   logsBox.scrollTop = logsBox.scrollHeight;
 }
 
 async function loadAudit() {
-  const payload = await api("/api/audit?lines=300");
+  const payload = await api("/api/audit?lines=250");
   auditBox.textContent = payload.lines.join("\n");
+}
+
+async function loadOnlinePlayers() {
+  const payload = await api("/api/telemetry/online");
+  const rows = payload.players.map((p) => [p.playerId, p.name, p.car, p.track, new Date(p.lastSeen).toLocaleTimeString()]);
+  onlinePlayers.innerHTML = tableHtml(["Player ID", "Name", "Car", "Track", "Last Seen"], rows.length ? rows : [["-", "No players", "-", "-", "-"]]);
+}
+
+async function loadLeaderboard() {
+  const track = lbTrack.value.trim();
+  const car = lbCar.value.trim();
+  const query = new URLSearchParams();
+  if (track) query.set("track", track);
+  if (car) query.set("car", car);
+  const payload = await api(`/api/leaderboard/base?${query.toString()}`);
+  const rows = payload.rows.map((r) => [r.rank, r.playerName, r.track, r.car, formatMs(r.lapTimeMs)]);
+  leaderboardTable.innerHTML = tableHtml(["Rank", "Driver", "Track", "Car", "Lap"], rows.length ? rows : [["-", "No data", "-", "-", "-"]]);
+}
+
+async function loadSeasonRanking() {
+  const season = seasonInput.value.trim();
+  const query = new URLSearchParams();
+  if (season) query.set("season", season);
+  const payload = await api(`/api/ranking/seasonal?${query.toString()}`);
+  const rows = payload.rows.map((r) => [r.rank, r.playerName, r.points, r.podiums]);
+  seasonTable.innerHTML = tableHtml(["Rank", "Driver", "Points", "Podiums"], rows.length ? rows : [["-", "No data", "-", "-"]]);
+}
+
+async function loadProfile() {
+  const playerId = profileInput.value.trim();
+  if (!playerId) {
+    profileBox.textContent = "Enter a player ID";
+    return;
+  }
+  const payload = await api(`/api/profiles/${encodeURIComponent(playerId)}`);
+  profileBox.textContent = JSON.stringify(payload, null, 2);
+}
+
+async function verifyBackup() {
+  const filePath = backupPathInput.value.trim();
+  if (!filePath) {
+    opsBox.textContent = "Backup file path is required.";
+    return;
+  }
+  const payload = await api("/api/backups/verify", {
+    method: "POST",
+    body: JSON.stringify({ filePath })
+  });
+  opsBox.textContent = JSON.stringify(payload, null, 2);
+}
+
+async function loadCanaryStatus() {
+  const payload = await api("/api/ops/canary");
+  opsBox.textContent = JSON.stringify(payload, null, 2);
 }
 
 async function runAction(action) {
@@ -141,9 +229,38 @@ async function saveConfig() {
   await refreshAll();
 }
 
+function connectRealtime() {
+  if (ws) {
+    ws.close();
+  }
+  const proto = window.location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${proto}://${window.location.host}/ws`);
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      if (["players.online", "lap.new", "action.executed", "snapshot", "overview", "ranking.season"].includes(msg.type)) {
+        loadOverview().catch(() => {});
+        loadOnlinePlayers().catch(() => {});
+        loadLeaderboard().catch(() => {});
+        loadSeasonRanking().catch(() => {});
+      }
+    } catch {
+      // no-op
+    }
+  };
+}
+
 async function refreshAll() {
   try {
-    await Promise.all([loadOverview(), loadConfig(), loadLogs(), loadAudit()]);
+    await Promise.all([
+      loadOverview(),
+      loadConfig(),
+      loadLogs(),
+      loadAudit(),
+      loadOnlinePlayers(),
+      loadLeaderboard(),
+      loadSeasonRanking()
+    ]);
   } catch (error) {
     actionResult.textContent = `Error: ${error.message}`;
   }
@@ -154,6 +271,7 @@ function showApp(user) {
   appShell.classList.remove("hidden");
   currentUser.textContent = `${user.username} (${user.role})`;
   refreshAll();
+  connectRealtime();
 
   if (refreshTimer) {
     clearInterval(refreshTimer);
@@ -172,6 +290,10 @@ function logout() {
   if (refreshTimer) {
     clearInterval(refreshTimer);
     refreshTimer = null;
+  }
+  if (ws) {
+    ws.close();
+    ws = null;
   }
 }
 
@@ -202,6 +324,11 @@ async function hydrateSession() {
 refreshBtn.addEventListener("click", refreshAll);
 logoutBtn.addEventListener("click", logout);
 saveConfigBtn.addEventListener("click", saveConfig);
+loadLeaderboardBtn.addEventListener("click", loadLeaderboard);
+loadSeasonBtn.addEventListener("click", loadSeasonRanking);
+loadProfileBtn.addEventListener("click", loadProfile);
+verifyBackupBtn.addEventListener("click", verifyBackup);
+loadCanaryBtn.addEventListener("click", loadCanaryStatus);
 
 document.querySelectorAll("button[data-action]").forEach((button) => {
   button.addEventListener("click", () => runAction(button.dataset.action));

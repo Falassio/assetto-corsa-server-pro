@@ -76,6 +76,10 @@ require_var WEB_ORIGIN
 require_var ALLOW_CONFIG_WRITE
 require_var ACTION_MODE
 require_var ACTION_TIMEOUT_MS
+require_var CURRENT_SEASON
+require_var RELEASE_CHANNEL
+require_var RELEASE_VERSION
+require_var CANARY_TARGET_PERCENT
 
 require_numeric STEAM_APP_ID
 require_numeric STEAMCMD_MAX_RETRIES
@@ -83,6 +87,7 @@ require_numeric STEAMCMD_RETRY_DELAY
 require_numeric CONTROL_PANEL_TOKEN_TTL_SEC
 require_numeric CONTROL_PANEL_RATE_LIMIT_RPM
 require_numeric ACTION_TIMEOUT_MS
+require_numeric CANARY_TARGET_PERCENT
 
 require_port AC_TCP_PORT
 require_port AC_UDP_PORT
@@ -97,6 +102,11 @@ require_bool01 ALLOW_CONFIG_WRITE
 
 if [[ "${ACTION_MODE}" != "mock" && "${ACTION_MODE}" != "command" ]]; then
   printf 'ERROR: ACTION_MODE must be mock or command, got: %s\n' "${ACTION_MODE}" >&2
+  errors=$((errors + 1))
+fi
+
+if [[ "${RELEASE_CHANNEL}" != "stable" && "${RELEASE_CHANNEL}" != "canary" ]]; then
+  printf 'ERROR: RELEASE_CHANNEL must be stable or canary, got: %s\n' "${RELEASE_CHANNEL}" >&2
   errors=$((errors + 1))
 fi
 

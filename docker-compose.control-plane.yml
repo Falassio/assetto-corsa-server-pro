@@ -24,6 +24,11 @@ services:
       ACTION_RESTART_CMD: ${ACTION_RESTART_CMD:-}
       ACTION_UPDATE_CMD: ${ACTION_UPDATE_CMD:-}
       ACTION_BACKUP_CMD: ${ACTION_BACKUP_CMD:-}
+      CURRENT_SEASON: ${CURRENT_SEASON:-2026-S1}
+      RELEASE_CHANNEL: ${RELEASE_CHANNEL:-stable}
+      RELEASE_VERSION: ${RELEASE_VERSION:-dev}
+      CANARY_TARGET_PERCENT: ${CANARY_TARGET_PERCENT:-10}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
     volumes:
       - control_plane_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
