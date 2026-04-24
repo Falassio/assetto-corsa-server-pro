@@ -1,8 +1,8 @@
 # Assetto Corsa Server Pro
 
-[![Build](https://img.shields.io/github/actions/workflow/status/bytedminds/assetto-corsa-server-pro/docker.yml?branch=main&label=build)](https://github.com/bytedminds/assetto-corsa-server-pro/actions/workflows/docker.yml)
-[![GHCR](https://img.shields.io/badge/registry-ghcr.io-blue)](https://ghcr.io/bytedminds/assetto-corsa-server-pro)
-[![Platforms](https://img.shields.io/badge/platforms-amd64%20%7C%20arm64-green)](https://github.com/bytedminds/assetto-corsa-server-pro)
+[![Build](https://img.shields.io/github/actions/workflow/status/Falassio/assetto-corsa-server-pro/docker.yml?branch=main&label=build)](https://github.com/Falassio/assetto-corsa-server-pro/actions/workflows/docker.yml)
+[![GHCR](https://img.shields.io/badge/registry-ghcr.io-blue)](https://ghcr.io/falassio/assetto-corsa-server-pro)
+[![Platforms](https://img.shields.io/badge/platforms-amd64%20%7C%20arm64-green)](https://github.com/Falassio/assetto-corsa-server-pro)
 
 > The first Assetto Corsa Docker Image with native-like performance on ARM64 via Box86 integration.
 
@@ -91,7 +91,7 @@ docker compose up -d --build
 ```bash
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t ghcr.io/bytedminds/assetto-corsa-server-pro:latest \
+  -t ghcr.io/falassio/assetto-corsa-server-pro:latest \
   --push .
 ```
 

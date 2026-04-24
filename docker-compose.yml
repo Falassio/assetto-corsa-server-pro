@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         STEAM_APP_ID: ${STEAM_APP_ID:-244210}
-    image: ${IMAGE_NAME:-ghcr.io/bytedminds/assetto-corsa-server-pro:latest}
+    image: ${IMAGE_NAME:-ghcr.io/falassio/assetto-corsa-server-pro:latest}
     container_name: ${CONTAINER_NAME:-assetto-corsa-server}
     environment:
       TZ: ${TZ:-Europe/Rome}

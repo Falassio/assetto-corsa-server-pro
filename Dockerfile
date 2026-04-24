@@ -6,7 +6,7 @@ ARG STEAM_APP_ID=244210
 
 LABEL org.opencontainers.image.title="Assetto Corsa Server Pro"
 LABEL org.opencontainers.image.description="Lightweight, multi-arch Assetto Corsa dedicated server image"
-LABEL org.opencontainers.image.source="https://github.com/bytedminds/assetto-corsa-server-pro"
+LABEL org.opencontainers.image.source="https://github.com/Falassio/assetto-corsa-server-pro"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV STEAM_APP_ID=${STEAM_APP_ID}
