@@ -1,7 +1,6 @@
-FROM --platform=$TARGETPLATFORM debian:bookworm-slim
+FROM debian:bookworm-slim
 
 ARG TARGETARCH
-ARG TARGETPLATFORM
 ARG STEAM_APP_ID=244210
 
 LABEL org.opencontainers.image.title="Assetto Corsa Server Pro"
@@ -45,13 +44,39 @@ RUN set -eux; \
       apt-get install -y --no-install-recommends libc6-i386 lib32gcc-s1 lib32stdc++6; \
     fi; \
     if [[ "${TARGETARCH}" == "arm64" ]]; then \
-      apt-get install -y --no-install-recommends build-essential cmake git python3; \
+      dpkg --add-architecture armhf; \
+      apt-get update; \
+      apt-get install -y --no-install-recommends \
+        build-essential \
+        cmake \
+        git \
+        python3 \
+        gcc-arm-linux-gnueabihf \
+        g++-arm-linux-gnueabihf \
+        libc6-dev-armhf-cross \
+        libc6:armhf \
+        libstdc++6:armhf \
+        libgcc-s1:armhf \
+        zlib1g:armhf \
+        libncurses6:armhf \
+        libcurl4:armhf; \
       git clone --depth=1 https://github.com/ptitSeb/box86 /tmp/box86; \
-      cmake -S /tmp/box86 -B /tmp/box86/build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DARM_DYNAREC=ON -DCMAKE_INSTALL_PREFIX=/usr; \
+      CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ \
+        cmake -S /tmp/box86 -B /tmp/box86/build \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DARM64=1 \
+        -DCMAKE_INSTALL_PREFIX=/usr; \
       cmake --build /tmp/box86/build -j"$(nproc)"; \
       cmake --install /tmp/box86/build; \
       rm -rf /tmp/box86; \
-      apt-get purge -y --auto-remove build-essential cmake git python3; \
+      apt-get purge -y --auto-remove \
+        build-essential \
+        cmake \
+        git \
+        python3 \
+        gcc-arm-linux-gnueabihf \
+        g++-arm-linux-gnueabihf \
+        libc6-dev-armhf-cross; \
     fi; \
     rm -rf /var/lib/apt/lists/*
 
