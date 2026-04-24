@@ -45,6 +45,7 @@ This project fixes those issues with a modern, reproducible setup.
 - `scripts/preflight-env.sh`: env validation before deployment
 - `RELEASE.md`: release and hotfix flow
 - `docs/PRODUCTION-CHECKLIST.md`: operational checklist for go-live
+- `DOCKERHUB.md`: ready-to-paste Docker Hub listing content
 
 ## Ports
 
@@ -122,7 +123,14 @@ Workflow: `.github/workflows/docker.yml`
 - runs ShellCheck on scripts
 - validates `.env.example`
 - builds `linux/amd64` and `linux/arm64` images on PRs
-- pushes images on `main` and version tags (`v*`)
+- pushes images to GHCR and Docker Hub on `main` and version tags (`v*`)
+
+Required repository secrets for Docker Hub publishing:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
+Create token: Docker Hub -> Account Settings -> Personal access tokens.
 
 ## Release process
 
