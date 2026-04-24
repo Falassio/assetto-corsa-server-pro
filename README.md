@@ -279,6 +279,7 @@ Operational checklist: `docs/PRODUCTION-CHECKLIST.md`.
 - `STEAMCMD_MAX_RETRIES` (default: `3`)
 - `STEAMCMD_RETRY_DELAY` (default: `5`)
 - `STEAM_VALIDATE` (`1`/`0`, default: `1`)
+- `STEAMCMD_ALLOW_FAILURE_IF_INSTALLED` (`1`/`0`, default: `1`)
 - `SKIP_UPDATE` (`1`/`0`, default: `0`)
 - `TZ` (example: `Europe/Rome`)
 
@@ -288,6 +289,11 @@ Operational checklist: `docs/PRODUCTION-CHECKLIST.md`.
 - next restarts apply incremental updates
 - ARM64 runtime automatically switches to Box86
 - if `docker` is not found locally, install Docker Desktop or use CI publishing
+
+### ARM64 SteamCMD note
+
+On some ARM64 hosts, SteamCMD can finish installation but still return a non-zero exit with a bootstrapper assertion.
+This image tolerates that case when `STEAMCMD_ALLOW_FAILURE_IF_INSTALLED=1` and the server binary already exists.
 
 ## Disclaimer
 

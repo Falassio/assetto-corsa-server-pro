@@ -14,6 +14,7 @@ STEAMCMD_MAX_RETRIES="${STEAMCMD_MAX_RETRIES:-3}"
 STEAMCMD_RETRY_DELAY="${STEAMCMD_RETRY_DELAY:-5}"
 STEAM_VALIDATE="${STEAM_VALIDATE:-1}"
 SKIP_UPDATE="${SKIP_UPDATE:-0}"
+STEAMCMD_ALLOW_FAILURE_IF_INSTALLED="${STEAMCMD_ALLOW_FAILURE_IF_INSTALLED:-1}"
 AC_SERVER_ARGS="${AC_SERVER_ARGS:-}"
 
 CFG_DIR="/cfg"
@@ -73,8 +74,15 @@ select_runtime() {
 update_server() {
   local steamcmd_native="${STEAMCMD_DIR}/steamcmd.sh"
   local steamcmd_x86="${STEAMCMD_DIR}/linux32/steamcmd"
-  local validate_flag=""
   local attempt=1
+  local server_path="${AC_INSTALL_DIR}/${AC_SERVER_BIN}"
+  local steam_args=(
+    +@ShutdownOnFailedCommand 1
+    +@NoPromptForPassword 1
+    +force_install_dir "${AC_INSTALL_DIR}"
+    +login anonymous
+    +app_update "${STEAM_APP_ID}"
+  )
 
   if [[ "${SKIP_UPDATE}" == "1" ]]; then
     log "SKIP_UPDATE=1: salto aggiornamento SteamCMD"
@@ -82,8 +90,10 @@ update_server() {
   fi
 
   if [[ "${STEAM_VALIDATE}" == "1" ]]; then
-    validate_flag="validate"
+    steam_args+=(validate)
   fi
+
+  steam_args+=(+quit)
 
   log "Aggiornamento Assetto Corsa Dedicated Server (AppID ${STEAM_APP_ID})"
 
@@ -92,20 +102,12 @@ update_server() {
 
     if [[ "${AC_RUNTIME}" == "box86" ]]; then
       [[ -x "${steamcmd_x86}" ]] || die "SteamCMD x86 non trovato: ${steamcmd_x86}"
-      if box86 "${steamcmd_x86}" \
-        +force_install_dir "${AC_INSTALL_DIR}" \
-        +login anonymous \
-        +app_update "${STEAM_APP_ID}" ${validate_flag} \
-        +quit; then
+      if box86 "${steamcmd_x86}" "${steam_args[@]}"; then
         return 0
       fi
     else
       [[ -x "${steamcmd_native}" ]] || die "SteamCMD non trovato: ${steamcmd_native}"
-      if "${steamcmd_native}" \
-        +force_install_dir "${AC_INSTALL_DIR}" \
-        +login anonymous \
-        +app_update "${STEAM_APP_ID}" ${validate_flag} \
-        +quit; then
+      if "${steamcmd_native}" "${steam_args[@]}"; then
         return 0
       fi
     fi
@@ -116,6 +118,11 @@ update_server() {
       sleep "${STEAMCMD_RETRY_DELAY}"
     fi
   done
+
+  if [[ "${STEAMCMD_ALLOW_FAILURE_IF_INSTALLED}" == "1" && -f "${server_path}" ]]; then
+    log "SteamCMD non ha restituito exit code pulito, ma il server esiste gia (${server_path}). Continuo l'avvio."
+    return 0
+  fi
 
   die "SteamCMD ha fallito dopo ${STEAMCMD_MAX_RETRIES} tentativi"
 }

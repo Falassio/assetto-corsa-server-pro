@@ -16,6 +16,9 @@ ENV STEAMCMD_MAX_RETRIES=3
 ENV STEAMCMD_RETRY_DELAY=5
 ENV STEAM_VALIDATE=1
 ENV SKIP_UPDATE=0
+ENV STEAMCMD_ALLOW_FAILURE_IF_INSTALLED=1
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 ENV HOME=/home/steam
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -27,6 +30,7 @@ RUN set -eux; \
       ca-certificates \
       curl \
       file \
+      locales \
       procps \
       tini \
       tar \
@@ -38,6 +42,8 @@ RUN set -eux; \
       libstdc++6 \
       libncurses6 \
       libnss3; \
+    sed -i 's/^# *en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen; \
+    locale-gen; \
     if [[ "${TARGETARCH}" == "amd64" ]]; then \
       dpkg --add-architecture i386; \
       apt-get update; \
