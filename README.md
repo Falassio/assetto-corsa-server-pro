@@ -1,8 +1,10 @@
 # Assetto Corsa Server Pro
 
 [![Build](https://img.shields.io/github/actions/workflow/status/Falassio/assetto-corsa-server-pro/docker.yml?branch=main&label=build)](https://github.com/Falassio/assetto-corsa-server-pro/actions/workflows/docker.yml)
+[![Docker Pulls](https://img.shields.io/docker/pulls/falassio/assetto-corsa-server-pro)](https://hub.docker.com/r/falassio/assetto-corsa-server-pro)
+[![Architecture](https://img.shields.io/badge/arch-x86__64%20%7C%20arm64-blue)](https://github.com/Falassio/assetto-corsa-server-pro)
+[![License](https://img.shields.io/github/license/Falassio/assetto-corsa-server-pro)](https://github.com/Falassio/assetto-corsa-server-pro/blob/main/LICENSE)
 [![GHCR](https://img.shields.io/badge/registry-ghcr.io-blue)](https://ghcr.io/falassio/assetto-corsa-server-pro)
-[![Platforms](https://img.shields.io/badge/platforms-amd64%20%7C%20arm64-green)](https://github.com/Falassio/assetto-corsa-server-pro)
 
 > The first Assetto Corsa Docker Image with native-like performance on ARM64 via Box86 integration.
 
